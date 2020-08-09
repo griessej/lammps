@@ -13,21 +13,21 @@
 
 #ifdef PAIR_CLASS
 
-PairStyle(coul/cut,PairCoulCut)
+PairStyle(lj/poly,PairLjPoly)
 
 #else
 
-#ifndef LMP_PAIR_COUL_CUT_H
-#define LMP_PAIR_COUL_CUT_H
+#ifndef LMP_PAIR_LJ_POLY_H
+#define LMP_PAIR_LJ_POLY_H
 
 #include "pair.h"
 
 namespace LAMMPS_NS {
 
-class PairCoulCut : public Pair {
+class PairLjPoly : public Pair {
  public:
-  PairCoulCut(class LAMMPS *);
-  virtual ~PairCoulCut();
+  PairLjPoly(class LAMMPS *);
+  virtual ~PairLjPoly();
   virtual void compute(int, int);
   virtual void settings(int, char **);
   void coeff(int, char **);
