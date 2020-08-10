@@ -54,11 +54,13 @@ PairLjPoly::~PairLjPoly()
 void PairLjPoly::compute(int eflag, int vflag)
 {
   int i,j,ii,jj,inum,jnum,itype,jtype;
-  double sizetmp,xtmp,ytmp,ztmp,delx,dely,delz,epoly,fpair;
-  double rsq,r2inv,rinv,forcepoly,factor_poly;
+  double sizetmp,xtmp,ytmp,ztmp,delx,dely,delz,evdwl,fpair;
+  double ilambda,jlambda,ijlambda;
+  double ipl2,ipl4,ipl6;
+  double rsq,r2inv,rinv,forceipl,factor_poly;
   int *ilist,*jlist,*numneigh,**firstneigh;
 
-  epoly = 0.0;
+  evdwl = 0.0;
   ev_init(eflag,vflag);
 
   double **x = atom->x;
@@ -74,15 +76,20 @@ void PairLjPoly::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
+  // coefficients for smooting
+  double c0 = -1.9360103298820364;
+  double c2 = 2.4694009309719855;
+  double c4 = -1.079912943573755;
+  double c6 = 0.1607013308889516;
+
   // loop over neighbors of my atoms
 
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
-    sizetmp = size[i];
+    ilambda = size[i];
     xtmp = x[i][0];
     ytmp = x[i][1];
     ztmp = x[i][2];
-    itype = type[i];
     jlist = firstneigh[i];
     jnum = numneigh[i];
 
@@ -94,28 +101,39 @@ void PairLjPoly::compute(int eflag, int vflag)
       dely = ytmp - x[j][1];
       delz = ztmp - x[j][2];
       rsq = delx*delx + dely*dely + delz*delz;
-      jtype = type[j];
+      jlambda = size[j];
+      ijlambda = 0.5*(ilambda + jlambda)*(1 - 0.1*std::abs(ilambda-jlambda));
+      ijlambdasq = ijlambda*ijlambda;
 
-      if (rsq < cutsq[itype][jtype]) {
-        r2inv = 1.0/rsq;
-        rinv = sqrt(r2inv);
-        forcecoul = qqrd2e * scale[itype][jtype] * qtmp*q[j]*rinv;
-        fpair = forcecoul * r2inv;
+      if (rsq < 1.4*1.4*ijlambdasq) {
+         r4 = rsq*rsq;
+         r6 = r4*rsq;
+         r2inv = 1.0/rsq;
+         r4inv = 1.0/r4;
+         r6inv = 1.0/r6;
+         r10inv = r4inv*r6inv;
+         ijlambda10 = ijlambdasq*ijlambdasq*ijlambdasq*ijlambdasq*ijlambdasq;
+         rinv = sqrt(r2inv);
+         ipl2 = c2*(rsq/ijlambdasq);
+         ipl4 = (c4*rsq*rsq)/(ijlambdasq*ijlambdasq);
+         ipl6 = (c6*rsq*rsq*rsq)/(ijlambdasq*ijlambdasq*ijlambdasq);
+         forceipl = -5*ijlambda10*r10inv + ipl2 + 2*ipl4 + 3*ipl6;
+         forceipl = -2*rinv*forceipl;
 
-        f[i][0] += delx*fpair;
-        f[i][1] += dely*fpair;
-        f[i][2] += delz*fpair;
-        if (newton_pair || j < nlocal) {
-          f[j][0] -= delx*fpair;
-          f[j][1] -= dely*fpair;
-          f[j][2] -= delz*fpair;
-        }
+         fpair = forceipl*rinv;
 
-        if (eflag)
-          ecoul = qqrd2e * scale[itype][jtype] * qtmp*q[j]*rinv;
-
-        if (evflag) ev_tally(i,j,nlocal,newton_pair,
-                             0.0,ecoul,fpair,delx,dely,delz);
+         f[i][0] += delx*fpair;
+         f[i][1] += dely*fpair;
+         f[i][2] += delz*fpair;
+         if (newton_pair || j < nlocal) {
+           f[j][0] -= delx*fpair;
+           f[j][1] -= dely*fpair;
+           f[j][2] -= delz*fpair;
+        }   
+        
+        if (eflag){
+            evdwl = ijlambda10*r10inv + c0 + ipl2 + ipl4 + ipl6
+        }     
       }
     }
   }
