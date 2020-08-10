@@ -54,8 +54,8 @@ PairLjPoly::~PairLjPoly()
 void PairLjPoly::compute(int eflag, int vflag)
 {
   int i,j,ii,jj,inum,jnum,itype,jtype;
-  double sizetmp,xtmp,ytmp,ztmp,delx,dely,delz,evdwl,fpair;
-  double ilambda,jlambda,ijlambda;
+  double xtmp,ytmp,ztmp,delx,dely,delz,evdwl,fpair;
+  double ilambda,jlambda,ijlambda,ijlambdasq;
   double ipl2,ipl4,ipl6;
   double rsq,r2inv,rinv,forceipl,factor_poly;
   int *ilist,*jlist,*numneigh,**firstneigh;
@@ -66,7 +66,6 @@ void PairLjPoly::compute(int eflag, int vflag)
   double **x = atom->x;
   double **f = atom->f;
   double *size = atom->q;
-  // Type ist eigentlich nicht nötig
   int *type = atom->type;
   int nlocal = atom->nlocal;
   int newton_pair = force->newton_pair;
@@ -81,6 +80,9 @@ void PairLjPoly::compute(int eflag, int vflag)
   double c2 = 2.4694009309719855;
   double c4 = -1.079912943573755;
   double c6 = 0.1607013308889516;
+
+  // fixed cutoff
+  double xcsq = 1.96;
 
   // loop over neighbors of my atoms
 
@@ -105,15 +107,15 @@ void PairLjPoly::compute(int eflag, int vflag)
       ijlambda = 0.5*(ilambda + jlambda)*(1 - 0.1*std::abs(ilambda-jlambda));
       ijlambdasq = ijlambda*ijlambda;
 
-      if (rsq < 1.4*1.4*ijlambdasq) {
+      if (rsq < xcsq*ijlambdasq) {
          r4 = rsq*rsq;
          r6 = r4*rsq;
+         rinv = sqrt(r2inv);
          r2inv = 1.0/rsq;
          r4inv = 1.0/r4;
          r6inv = 1.0/r6;
          r10inv = r4inv*r6inv;
          ijlambda10 = ijlambdasq*ijlambdasq*ijlambdasq*ijlambdasq*ijlambdasq;
-         rinv = sqrt(r2inv);
          ipl2 = c2*(rsq/ijlambdasq);
          ipl4 = (c4*rsq*rsq)/(ijlambdasq*ijlambdasq);
          ipl6 = (c6*rsq*rsq*rsq)/(ijlambdasq*ijlambdasq*ijlambdasq);
