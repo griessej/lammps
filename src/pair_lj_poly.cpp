@@ -11,7 +11,7 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
-#include "pair_coul_cut.h"
+#include "pair_lj_poly.h"
 #include <mpi.h>
 #include <cmath>
 #include <cstring>
@@ -28,13 +28,13 @@ using namespace LAMMPS_NS;
 
 /* ---------------------------------------------------------------------- */
 
-PairCoulCut::PairCoulCut(LAMMPS *lmp) : Pair(lmp) {
+PairLjPoly::PairLjPoly(LAMMPS *lmp) : Pair(lmp) {
   centroidstressflag = 1;
 }
 
 /* ---------------------------------------------------------------------- */
 
-PairCoulCut::~PairCoulCut()
+PairLjPoly::~PairLjPoly()
 {
   if (allocated) {
     memory->destroy(setflag);
@@ -47,7 +47,7 @@ PairCoulCut::~PairCoulCut()
 
 /* ---------------------------------------------------------------------- */
 
-void PairCoulCut::compute(int eflag, int vflag)
+void PairLjPoly::compute(int eflag, int vflag)
 {
   int i,j,ii,jj,inum,jnum,itype,jtype;
   double qtmp,xtmp,ytmp,ztmp,delx,dely,delz,ecoul,fpair;
@@ -125,7 +125,7 @@ void PairCoulCut::compute(int eflag, int vflag)
    allocate all arrays
 ------------------------------------------------------------------------- */
 
-void PairCoulCut::allocate()
+void PairLjPoly::allocate()
 {
   allocated = 1;
   int n = atom->ntypes;
@@ -145,7 +145,7 @@ void PairCoulCut::allocate()
    global settings
 ------------------------------------------------------------------------- */
 
-void PairCoulCut::settings(int narg, char **arg)
+void PairLjPoly::settings(int narg, char **arg)
 {
   if (narg != 1) error->all(FLERR,"Illegal pair_style command");
 
@@ -165,7 +165,7 @@ void PairCoulCut::settings(int narg, char **arg)
    set coeffs for one or more type pairs
 ------------------------------------------------------------------------- */
 
-void PairCoulCut::coeff(int narg, char **arg)
+void PairLjPoly::coeff(int narg, char **arg)
 {
   if (narg < 2 || narg > 3)
     error->all(FLERR,"Incorrect args for pair coefficients");
@@ -196,7 +196,7 @@ void PairCoulCut::coeff(int narg, char **arg)
    init specific to this pair style
 ------------------------------------------------------------------------- */
 
-void PairCoulCut::init_style()
+void PairLjPoly::init_style()
 {
   if (!atom->q_flag)
     error->all(FLERR,"Pair style coul/cut requires atom attribute q");
@@ -208,7 +208,7 @@ void PairCoulCut::init_style()
    init for one type pair i,j and corresponding j,i
 ------------------------------------------------------------------------- */
 
-double PairCoulCut::init_one(int i, int j)
+double PairLjPoly::init_one(int i, int j)
 {
   if (setflag[i][j] == 0)
     cut[i][j] = mix_distance(cut[i][i],cut[j][j]);
@@ -222,7 +222,7 @@ double PairCoulCut::init_one(int i, int j)
   proc 0 writes to restart file
 ------------------------------------------------------------------------- */
 
-void PairCoulCut::write_restart(FILE *fp)
+void PairLjPoly::write_restart(FILE *fp)
 {
   write_restart_settings(fp);
 
@@ -238,7 +238,7 @@ void PairCoulCut::write_restart(FILE *fp)
   proc 0 reads from restart file, bcasts
 ------------------------------------------------------------------------- */
 
-void PairCoulCut::read_restart(FILE *fp)
+void PairLjPoly::read_restart(FILE *fp)
 {
   read_restart_settings(fp);
   allocate();
@@ -260,7 +260,7 @@ void PairCoulCut::read_restart(FILE *fp)
   proc 0 writes to restart file
 ------------------------------------------------------------------------- */
 
-void PairCoulCut::write_restart_settings(FILE *fp)
+void PairLjPoly::write_restart_settings(FILE *fp)
 {
   fwrite(&cut_global,sizeof(double),1,fp);
   fwrite(&offset_flag,sizeof(int),1,fp);
@@ -271,7 +271,7 @@ void PairCoulCut::write_restart_settings(FILE *fp)
   proc 0 reads from restart file, bcasts
 ------------------------------------------------------------------------- */
 
-void PairCoulCut::read_restart_settings(FILE *fp)
+void PairLjPoly::read_restart_settings(FILE *fp)
 {
   if (comm->me == 0) {
     utils::sfread(FLERR,&cut_global,sizeof(double),1,fp,NULL,error);
@@ -285,7 +285,7 @@ void PairCoulCut::read_restart_settings(FILE *fp)
 
 /* ---------------------------------------------------------------------- */
 
-double PairCoulCut::single(int i, int j, int /*itype*/, int /*jtype*/,
+double PairLjPoly::single(int i, int j, int /*itype*/, int /*jtype*/,
                            double rsq, double factor_coul, double /*factor_lj*/,
                            double &fforce)
 {
@@ -302,7 +302,7 @@ double PairCoulCut::single(int i, int j, int /*itype*/, int /*jtype*/,
 
 /* ---------------------------------------------------------------------- */
 
-void *PairCoulCut::extract(const char *str, int &dim)
+void *PairLjPoly::extract(const char *str, int &dim)
 {
   dim = 2;
   if (strcmp(str,"cut_coul") == 0) return (void *) &cut;
