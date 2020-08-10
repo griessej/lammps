@@ -54,21 +54,20 @@ PairLjPoly::~PairLjPoly()
 void PairLjPoly::compute(int eflag, int vflag)
 {
   int i,j,ii,jj,inum,jnum,itype,jtype;
-  double qtmp,xtmp,ytmp,ztmp,delx,dely,delz,ecoul,fpair;
-  double rsq,r2inv,rinv,forcecoul,factor_coul;
+  double sizetmp,xtmp,ytmp,ztmp,delx,dely,delz,epoly,fpair;
+  double rsq,r2inv,rinv,forcepoly,factor_poly;
   int *ilist,*jlist,*numneigh,**firstneigh;
 
-  ecoul = 0.0;
+  epoly = 0.0;
   ev_init(eflag,vflag);
 
   double **x = atom->x;
   double **f = atom->f;
-  double *q = atom->q;
+  double *size = atom->q;
+  // Type ist eigentlich nicht nötig
   int *type = atom->type;
   int nlocal = atom->nlocal;
-  double *special_coul = force->special_coul;
   int newton_pair = force->newton_pair;
-  double qqrd2e = force->qqrd2e;
 
   inum = list->inum;
   ilist = list->ilist;
@@ -79,7 +78,7 @@ void PairLjPoly::compute(int eflag, int vflag)
 
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
-    qtmp = q[i];
+    sizetmp = size[i];
     xtmp = x[i][0];
     ytmp = x[i][1];
     ztmp = x[i][2];
@@ -89,7 +88,6 @@ void PairLjPoly::compute(int eflag, int vflag)
 
     for (jj = 0; jj < jnum; jj++) {
       j = jlist[jj];
-      factor_coul = special_coul[sbmask(j)];
       j &= NEIGHMASK;
 
       delx = xtmp - x[j][0];
@@ -102,7 +100,7 @@ void PairLjPoly::compute(int eflag, int vflag)
         r2inv = 1.0/rsq;
         rinv = sqrt(r2inv);
         forcecoul = qqrd2e * scale[itype][jtype] * qtmp*q[j]*rinv;
-        fpair = factor_coul*forcecoul * r2inv;
+        fpair = forcecoul * r2inv;
 
         f[i][0] += delx*fpair;
         f[i][1] += dely*fpair;
@@ -114,7 +112,7 @@ void PairLjPoly::compute(int eflag, int vflag)
         }
 
         if (eflag)
-          ecoul = factor_coul * qqrd2e * scale[itype][jtype] * qtmp*q[j]*rinv;
+          ecoul = qqrd2e * scale[itype][jtype] * qtmp*q[j]*rinv;
 
         if (evflag) ev_tally(i,j,nlocal,newton_pair,
                              0.0,ecoul,fpair,delx,dely,delz);
@@ -209,13 +207,11 @@ void PairLjPoly::init_style()
 /* ----------------------------------------------------------------------
    init for one type pair i,j and corresponding j,i
 ------------------------------------------------------------------------- */
-
+// Ist eigentlich auch unnötig
 double PairLjPoly::init_one(int i, int j)
 {
   if (setflag[i][j] == 0)
     cut[i][j] = mix_distance(cut[i][i],cut[j][j]);
-
-  scale[j][i] = scale[i][j];
 
   return cut[i][j];
 }
@@ -288,7 +284,7 @@ void PairLjPoly::read_restart_settings(FILE *fp)
 /* ---------------------------------------------------------------------- */
 
 double PairLjPoly::single(int i, int j, int /*itype*/, int /*jtype*/,
-                           double rsq, double factor_coul, double /*factor_lj*/,
+                           double rsq, double /*factor_lj*/,
                            double &fforce)
 {
   double r2inv,rinv,forcecoul,phicoul;
@@ -296,10 +292,10 @@ double PairLjPoly::single(int i, int j, int /*itype*/, int /*jtype*/,
   r2inv = 1.0/rsq;
   rinv = sqrt(r2inv);
   forcecoul = force->qqrd2e * atom->q[i]*atom->q[j]*rinv;
-  fforce = factor_coul*forcecoul * r2inv;
+  fforce = forcecoul * r2inv;
 
   phicoul = force->qqrd2e * atom->q[i]*atom->q[j]*rinv;
-  return factor_coul*phicoul;
+  return phicoul;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -308,6 +304,5 @@ void *PairLjPoly::extract(const char *str, int &dim)
 {
   dim = 2;
   if (strcmp(str,"cut_coul") == 0) return (void *) &cut;
-  if (strcmp(str,"scale") == 0) return (void *) scale;
   return NULL;
 }
