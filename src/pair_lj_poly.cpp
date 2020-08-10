@@ -11,6 +11,10 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
+/* ----------------------------------------------------------------------
+   Contributing author: Jan Griesser
+------------------------------------------------------------------------- */
+
 #include "pair_lj_poly.h"
 #include <mpi.h>
 #include <cmath>
@@ -29,6 +33,8 @@ using namespace LAMMPS_NS;
 /* ---------------------------------------------------------------------- */
 
 PairLjPoly::PairLjPoly(LAMMPS *lmp) : Pair(lmp) {
+  // Todo: Write the method for writedata
+  writedata = 1;
   centroidstressflag = 1;
 }
 
@@ -39,9 +45,7 @@ PairLjPoly::~PairLjPoly()
   if (allocated) {
     memory->destroy(setflag);
     memory->destroy(cutsq);
-
     memory->destroy(cut);
-    memory->destroy(scale);
   }
 }
 
@@ -136,9 +140,7 @@ void PairLjPoly::allocate()
       setflag[i][j] = 0;
 
   memory->create(cutsq,n+1,n+1,"pair:cutsq");
-
   memory->create(cut,n+1,n+1,"pair:cut");
-  memory->create(scale,n+1,n+1,"pair:scale");
 }
 
 /* ----------------------------------------------------------------------
