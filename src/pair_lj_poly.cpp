@@ -166,7 +166,7 @@ void PairLjPoly::settings(int narg, char **arg)
 /* ----------------------------------------------------------------------
    set coeffs for one or more type pairs
 ------------------------------------------------------------------------- */
-
+// Ist eigentlich unnötig, da die Koeffizienten nie gesetzt werden 
 void PairLjPoly::coeff(int narg, char **arg)
 {
   if (narg < 2 || narg > 3)
@@ -201,7 +201,7 @@ void PairLjPoly::coeff(int narg, char **arg)
 void PairLjPoly::init_style()
 {
   if (!atom->q_flag)
-    error->all(FLERR,"Pair style coul/cut requires atom attribute q");
+    error->all(FLERR,"Pair style lj/poly requires atom attribute q. Notice that q contains the size of the particle!");
 
   neighbor->request(this,instance_me);
 }
