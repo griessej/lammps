@@ -197,10 +197,10 @@ void PairLjPoly::coeff(int narg, char **arg)
   force->bounds(FLERR,arg[0],atom->ntypes,ilo,ihi);
   force->bounds(FLERR,arg[1],atom->ntypes,jlo,jhi);
 
-  double epsilon_one = force->numeric(FLERR,arg[2])
+  double epsilon_one = force->numeric(FLERR,arg[2]);
 
   double cut_one = cut_global;
-  if (narg == 4){
+  if (narg == 4) {
     cut_one = force->numeric(FLERR,arg[3]);
   }
 
@@ -318,8 +318,7 @@ void PairLjPoly::read_restart_settings(FILE *fp)
 /* ---------------------------------------------------------------------- */
 
 double PairLjPoly::single(int i, int j, int /*itype*/, int /*jtype*/,
-                           double rsq, double /*factor_lj*/,
-                           double &fforce)
+                           double rsq, double &fforce)
 {
   double r2inv,rinv,forcecoul,phicoul;
 
