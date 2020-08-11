@@ -56,9 +56,9 @@ void PairLjPoly::compute(int eflag, int vflag)
 {
   int i,j,ii,jj,inum,jnum,itype,jtype;
   double xtmp,ytmp,ztmp,delx,dely,delz,evdwl,fpair;
-  double ilambda,jlambda,ijlambda,ijlambdasq;
+  double ilambda,jlambda,ijlambdasq;
   double ipl2,ipl4,ipl6;
-  double rsq,r2inv,rinv,forceipl,factor_poly;
+  double rsq,r4,r6,r2inv,r10inv,forceipl,factor_poly;
   int *ilist,*jlist,*numneigh,**firstneigh;
 
   evdwl = 0.0;
@@ -76,12 +76,11 @@ void PairLjPoly::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // coefficients for smooting
+  // coefficients for smooting q=3
   double c0 = -1.9360103298820364;
   double c2 = 2.4694009309719855;
   double c4 = -1.079912943573755;
   double c6 = 0.1607013308889516;
-
   // fixed cutoff
   double xcsq = 1.96;
 
@@ -89,10 +88,11 @@ void PairLjPoly::compute(int eflag, int vflag)
 
   for (ii = 0; ii < inum; ii++) {
     i = ilist[ii];
-    ilambda = size[i];
     xtmp = x[i][0];
     ytmp = x[i][1];
     ztmp = x[i][2];
+    itype = type[i];
+    ilambda = size[i];
     jlist = firstneigh[i];
     jnum = numneigh[i];
 
@@ -104,14 +104,21 @@ void PairLjPoly::compute(int eflag, int vflag)
       dely = ytmp - x[j][1];
       delz = ztmp - x[j][2];
       rsq = delx*delx + dely*dely + delz*delz;
+      jtype = type[j];
       jlambda = size[j];
-      ijlambda = 0.5*(ilambda + jlambda)*(1 - 0.1*std::abs(ilambda-jlambda));
-      ijlambdasq = ijlambda*ijlambda;
+      ijlambdasq = pow(0.5*(ilambda + jlambda)*(1 - 0.1*std::abs(ilambda-jlambda)),2.0);
 
-      if (rsq < xcsq*ijlambdasq) {
+      if (rsq <= xcsq*ijlambdasq) {
          r4 = rsq*rsq;
          r6 = r4*rsq;
-         rinv = sqrt(r2inv);
+         r2inv = 1.0/rsq;
+         r10inv = 1.0/(r4*r6);
+         ijlambda10 = pow(ijlambdasq,5.0);
+         ijlambdasqinv = 1.0/ijlambdasq; 
+         ijlambda4inv = ijlambdasqinv*ijlambdasqinv;
+         ijlambda6inv = ijlambdasqinv*ijlambda4inv;
+
+
          r2inv = 1.0/rsq;
          r4inv = 1.0/r4;
          r6inv = 1.0/r6;
