@@ -33,7 +33,6 @@ using namespace LAMMPS_NS;
 /* ---------------------------------------------------------------------- */
 
 PairLjPoly::PairLjPoly(LAMMPS *lmp) : Pair(lmp) {
-  // Todo: Write the method for writedata
   writedata = 1;
   centroidstressflag = 1;
 }
@@ -342,15 +341,43 @@ void PairLjPoly::write_data_all(FILE *fp)
 double PairLjPoly::single(int i, int j, int /*itype*/, int /*jtype*/,
                            double rsq, double &fforce)
 {
-  double r2inv,rinv,forcecoul,phicoul;
+  double r2inv,rinv,r4,r6,r10inv,forceipl,evdwl;
+  double ijsize2,ijsize2inv,ijsize10,ijsize4inv,ijsize6inv;
+  double dipl,ddipl,dddipl;
 
-  r2inv = 1.0/rsq;
-  rinv = sqrt(r2inv);
-  forcecoul = force->qqrd2e * atom->q[i]*atom->q[j]*rinv;
-  fforce = forcecoul * r2inv;
+  // coefficients for smooting q=3
+  double c0 = -1.9360103298820364;
+  double c2 = 2.4694009309719855;
+  double c4 = -1.079912943573755;
+  double c6 = 0.1607013308889516;
+  double xcsq = 1.96;
+  //
+  ijsize2 = pow(0.5*(atom->q[i] + atom->q[j])*(1 - 0.1*std::abs(atom->q[i]-atom->q[j])),2.0);
+  
+  if (rsq <= xcsq*ijsize2) {
+    r4 = rsq*rsq;
+    r6 = r4*rsq;
+    rinv = sqrt(r2inv);
+    r2inv = 1.0/rsq;
+    r10inv = 1.0/(r4*r6);
+    ijsize10 = pow(ijsize2,5.0);
+    ijsize2inv = 1.0/ijsize2; 
+    ijsize4inv = ijsize2inv*ijsize2inv;
+    ijsize6inv = ijsize4inv*ijsize2inv;
+    dipl = c2*rsq*ijsize2inv;
+    ddipl = c4*r4*ijsize4inv;
+    dddipl = c6*r6*ijsize6inv;
 
-  phicoul = force->qqrd2e * atom->q[i]*atom->q[j]*rinv;
-  return phicoul;
+    forceipl = 2*epsilon[atom->type[i]][atom->type[j]]*(-5*ijsize10*r10inv + dipl + 2*ddipl + 3*dddipl);
+    fforce = forceipl * r2inv;
+    evdwl = epsilon[atom->type[i]][atom->type[j]]*(ijsize10*r10inv + c0 + dipl + ddipl + dddipl);
+    return evdwl;
+  }
+  else {
+    fforce = 0;
+    evdwl = 0;
+    return evdwl;
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -358,6 +385,6 @@ double PairLjPoly::single(int i, int j, int /*itype*/, int /*jtype*/,
 void *PairLjPoly::extract(const char *str, int &dim)
 {
   dim = 2;
-  if (strcmp(str,"cut_coul") == 0) return (void *) &cut;
+  if (strcmp(str,"cut") == 0) return (void *) &cut;
   return NULL;
 }
