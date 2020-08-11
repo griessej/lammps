@@ -186,10 +186,10 @@ void PairLjPoly::settings(int narg, char **arg)
 /* ----------------------------------------------------------------------
    set coeffs for one or more type pairs
 ------------------------------------------------------------------------- */
-// Ist eigentlich unnötig, da die Koeffizienten nie gesetzt werden 
+
 void PairLjPoly::coeff(int narg, char **arg)
 {
-  if (narg < 2 || narg > 3)
+  if (narg != 3 && narg != 4)
     error->all(FLERR,"Incorrect args for pair coefficients");
   if (!allocated) allocate();
 
@@ -197,14 +197,18 @@ void PairLjPoly::coeff(int narg, char **arg)
   force->bounds(FLERR,arg[0],atom->ntypes,ilo,ihi);
   force->bounds(FLERR,arg[1],atom->ntypes,jlo,jhi);
 
+  double epsilon_one = force->numeric(FLERR,arg[2])
+
   double cut_one = cut_global;
-  if (narg == 3) cut_one = force->numeric(FLERR,arg[2]);
+  if (narg == 4){
+    cut_one = force->numeric(FLERR,arg[3]);
+  }
 
   int count = 0;
   for (int i = ilo; i <= ihi; i++) {
     for (int j = MAX(jlo,i); j <= jhi; j++) {
+      epsilon[i][j] = epsilon_one;
       cut[i][j] = cut_one;
-      scale[i][j] = 1.0;
       setflag[i][j] = 1;
       count++;
     }
