@@ -258,7 +258,10 @@ void PairLjPoly::write_restart(FILE *fp)
   for (i = 1; i <= atom->ntypes; i++)
     for (j = i; j <= atom->ntypes; j++) {
       fwrite(&setflag[i][j],sizeof(int),1,fp);
-      if (setflag[i][j]) fwrite(&cut[i][j],sizeof(double),1,fp);
+      if (setflag[i][j]){
+        fwrite(&epsilon[i][j],sizeof(double),1,fp)
+        fwrite(&cut[i][j],sizeof(double),1,fp);
+      }
     }
 }
 
@@ -278,7 +281,11 @@ void PairLjPoly::read_restart(FILE *fp)
       if (me == 0) utils::sfread(FLERR,&setflag[i][j],sizeof(int),1,fp,NULL,error);
       MPI_Bcast(&setflag[i][j],1,MPI_INT,0,world);
       if (setflag[i][j]) {
-        if (me == 0) utils::sfread(FLERR,&cut[i][j],sizeof(double),1,fp,NULL,error);
+        if (me == 0){
+          utils::sfread(FLERR,&epsilon[i][j],sizeof(double),1,fp,NULL,error);
+          utils::sfread(FLERR,&cut[i][j],sizeof(double),1,fp,NULL,error);  
+        }
+        MPI_Bcast(&epsilon[i][j],1,MPI_DOUBLE,0,world);
         MPI_Bcast(&cut[i][j],1,MPI_DOUBLE,0,world);
       }
     }
@@ -291,7 +298,6 @@ void PairLjPoly::read_restart(FILE *fp)
 void PairLjPoly::write_restart_settings(FILE *fp)
 {
   fwrite(&cut_global,sizeof(double),1,fp);
-  fwrite(&offset_flag,sizeof(int),1,fp);
   fwrite(&mix_flag,sizeof(int),1,fp);
 }
 
@@ -303,11 +309,9 @@ void PairLjPoly::read_restart_settings(FILE *fp)
 {
   if (comm->me == 0) {
     utils::sfread(FLERR,&cut_global,sizeof(double),1,fp,NULL,error);
-    utils::sfread(FLERR,&offset_flag,sizeof(int),1,fp,NULL,error);
     utils::sfread(FLERR,&mix_flag,sizeof(int),1,fp,NULL,error);
   }
   MPI_Bcast(&cut_global,1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&offset_flag,1,MPI_INT,0,world);
   MPI_Bcast(&mix_flag,1,MPI_INT,0,world);
 }
 
