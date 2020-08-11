@@ -233,11 +233,15 @@ void PairLjPoly::init_style()
 /* ----------------------------------------------------------------------
    init for one type pair i,j and corresponding j,i
 ------------------------------------------------------------------------- */
-// Ist eigentlich auch unnötig
+
 double PairLjPoly::init_one(int i, int j)
 {
-  if (setflag[i][j] == 0)
+  if (setflag[i][j] == 0){
     cut[i][j] = mix_distance(cut[i][i],cut[j][j]);
+  }
+
+  cut[j][i] = cut[i][j];
+  epsilon[j][i] = epsilon[i][j];
 
   return cut[i][j];
 }
