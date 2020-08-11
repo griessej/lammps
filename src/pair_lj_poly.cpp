@@ -56,9 +56,9 @@ void PairLjPoly::compute(int eflag, int vflag)
 {
   int i,j,ii,jj,inum,jnum,itype,jtype;
   double xtmp,ytmp,ztmp,delx,dely,delz,evdwl,fpair;
-  double ilambda,jlambda,ijlambdasq;
-  double ipl2,ipl4,ipl6;
-  double rsq,r4,r6,r2inv,r10inv,forceipl,factor_poly;
+  double isize,jsize,ijsize2,ijsize10,ijsize2inv,ijsize4inv,ijsize6inv;
+  double dipl,ddipl,dddipl;
+  double rsq,r4,r6,r2inv,r10inv,forceipl;
   int *ilist,*jlist,*numneigh,**firstneigh;
 
   evdwl = 0.0;
@@ -92,7 +92,7 @@ void PairLjPoly::compute(int eflag, int vflag)
     ytmp = x[i][1];
     ztmp = x[i][2];
     itype = type[i];
-    ilambda = size[i];
+    isize = size[i];
     jlist = firstneigh[i];
     jnum = numneigh[i];
 
@@ -105,32 +105,25 @@ void PairLjPoly::compute(int eflag, int vflag)
       delz = ztmp - x[j][2];
       rsq = delx*delx + dely*dely + delz*delz;
       jtype = type[j];
-      jlambda = size[j];
-      ijlambdasq = pow(0.5*(ilambda + jlambda)*(1 - 0.1*std::abs(ilambda-jlambda)),2.0);
+      jsize = size[j];
+      ijsize2 = pow(0.5*(isize + jsize)*(1 - 0.1*std::abs(isize-jsize)),2.0);
 
-      if (rsq <= xcsq*ijlambdasq) {
+      if (rsq <= xcsq*ijsize2) {
          r4 = rsq*rsq;
          r6 = r4*rsq;
          r2inv = 1.0/rsq;
          r10inv = 1.0/(r4*r6);
-         ijlambda10 = pow(ijlambdasq,5.0);
-         ijlambdasqinv = 1.0/ijlambdasq; 
-         ijlambda4inv = ijlambdasqinv*ijlambdasqinv;
-         ijlambda6inv = ijlambdasqinv*ijlambda4inv;
+         ijsize10 = pow(ijsize2,5.0);
+         ijsize2inv = 1.0/ijsize2; 
+         ijsize4inv = ijsize2inv*ijsize2inv;
+         ijsize6inv = ijsize4inv*ijsize2inv;
 
-
-         r2inv = 1.0/rsq;
-         r4inv = 1.0/r4;
-         r6inv = 1.0/r6;
-         r10inv = r4inv*r6inv;
-         ijlambda10 = ijlambdasq*ijlambdasq*ijlambdasq*ijlambdasq*ijlambdasq;
-         ipl2 = c2*(rsq/ijlambdasq);
-         ipl4 = (c4*rsq*rsq)/(ijlambdasq*ijlambdasq);
-         ipl6 = (c6*rsq*rsq*rsq)/(ijlambdasq*ijlambdasq*ijlambdasq);
-         forceipl = -5*ijlambda10*r10inv + ipl2 + 2*ipl4 + 3*ipl6;
-         forceipl = -2*rinv*forceipl;
-
-         fpair = forceipl*rinv;
+         // 
+         dipl = c2*rsq*ijsize2inv;
+         ddipl = c4*r4*ijsize4inv;
+         dddipl = c6*r6*ijsize6inv;
+         forceipl = 2*epsilon[itype][jtype]*(-5*ijsize10*r10inv + dipl + 2*ddipl + 3*dddipl);
+         fpair = forceipl*r2inv;
 
          f[i][0] += delx*fpair;
          f[i][1] += dely*fpair;
@@ -142,7 +135,7 @@ void PairLjPoly::compute(int eflag, int vflag)
         }   
         
         if (eflag){
-            evdwl = ijlambda10*r10inv + c0 + ipl2 + ipl4 + ipl6
+            evdwl = epsilon[itype][jtype]*(ijsize10*r10inv + c0 + dipl + ddipl + dddipl);
         }     
       }
     }
