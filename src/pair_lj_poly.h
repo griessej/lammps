@@ -35,6 +35,8 @@ class PairLjPoly : public Pair {
   double init_one(int, int);
   void write_restart(FILE *);
   void read_restart(FILE *);
+  void write_data(FILE *);
+  void write_data_all(FILE *);
   virtual void write_restart_settings(FILE *);
   virtual void read_restart_settings(FILE *);
   virtual double single(int, int, int, int, double, double &);
