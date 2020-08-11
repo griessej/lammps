@@ -46,6 +46,7 @@ PairLjPoly::~PairLjPoly()
     memory->destroy(setflag);
     memory->destroy(cutsq);
     memory->destroy(cut);
+    memory->destroy(epsilon);
   }
 }
 
@@ -159,6 +160,7 @@ void PairLjPoly::allocate()
 
   memory->create(cutsq,n+1,n+1,"pair:cutsq");
   memory->create(cut,n+1,n+1,"pair:cut");
+  memory->create(epsilon,n+1,n+1,"pair:epsilon");
 }
 
 /* ----------------------------------------------------------------------
