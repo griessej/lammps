@@ -75,14 +75,6 @@ void PairLjPoly::compute(int eflag, int vflag)
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
 
-  // coefficients for smooting q=3
-  double c0 = -1.9360103298820364;
-  double c2 = 2.4694009309719855;
-  double c4 = -1.079912943573755;
-  double c6 = 0.1607013308889516;
-  // fixed cutoff
-  double xcsq = 1.96;
-
   // loop over neighbors of my atoms
 
   for (ii = 0; ii < inum; ii++) {

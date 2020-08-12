@@ -46,6 +46,13 @@ class PairLjPoly : public Pair {
   double cut_global;
   double **cut;
   double **epsilon;
+  // coefficients for smooting potential and derivatives
+  double c0 = -1.9360103298820364;
+  double c2 = 2.4694009309719855;
+  double c4 = -1.079912943573755;
+  double c6 = 0.1607013308889516;
+  // correct squared cutoff
+  double xcsq = 1.96;
 
   virtual void allocate();
 };
