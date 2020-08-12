@@ -13,6 +13,7 @@
 
 /* ----------------------------------------------------------------------
    Contributing author: Jan Griesser
+   Reference: Lerner, E. (2019), Journal of Non-Crystalline Solids, 522, 119570.
 ------------------------------------------------------------------------- */
 
 #include "pair_lj_poly.h"
