@@ -124,11 +124,16 @@ void PairLjPoly::compute(int eflag, int vflag)
            f[j][0] -= delx*fpair;
            f[j][1] -= dely*fpair;
            f[j][2] -= delz*fpair;
-        }   
+         }   
         
-        if (eflag){
+         if (eflag){
             evdwl = epsilon[itype][jtype]*(ijsize10*r10inv + c0 + dipl + ddipl + dddipl);
-        }     
+         }     
+         
+         if (evflag){
+           ev_tally(i,j,nlocal,newton_pair,evdwl,0.0,fpair,delx,dely,delz);
+         }
+
       }
     }
   }
