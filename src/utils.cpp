@@ -71,7 +71,7 @@ using namespace LAMMPS_NS;
  *  This function is supposed to be a more safe, more specific and
  *  simple to use API to find pattern matches. The purpose is to replace
  *  uses of either strncmp() or strstr() in the code base to find
- *  substrings safely. With strncmp() finding prefixes, the number of
+ *  sub-strings safely. With strncmp() finding prefixes, the number of
  *  characters to match must be counted, which can lead to errors,
  *  while using "^pattern" will do the same with less problems.
  *  Matching for suffixes using strstr() is not as specific as 'pattern$',
@@ -88,7 +88,7 @@ bool utils::strmatch(const std::string &text, const std::string &pattern)
   return (pos >= 0);
 }
 
-/* This simplifies the repetitive task of outputting some
+/** This function simplifies the repetitive task of outputting some
  * message to both the screen and/or the log file. In combination
  * with using fmt::format(), which returns the formatted text
  * in a std::string() instance, this can be used to reduce
@@ -109,9 +109,11 @@ std::string utils::getsyserror()
   return std::string(strerror(errno));
 }
 
-/*
- * On Linux the folder /proc/self/fd holds symbolic links to the actual
+/** On Linux the folder /proc/self/fd holds symbolic links to the actual
  * pathnames associated with each open file descriptor of the current process.
+ *
+ * This function is used to provide a filename with error messages in functions
+ * where the filename is not passed as an argument, but the FILE * pointer.
  */
 const char *utils::guesspath(char *buf, int len, FILE *fp)
 {
@@ -352,7 +354,7 @@ tagint utils::tnumeric(const char *file, int line, const char *str,
    Return string without leading or trailing whitespace
 ------------------------------------------------------------------------- */
 
-std::string utils::trim(const std::string & line) {
+std::string utils::trim(const std::string &line) {
   int beg = re_match(line.c_str(),"\\S+");
   int end = re_match(line.c_str(),"\\s+$");
   if (beg < 0) beg = 0;
@@ -365,7 +367,7 @@ std::string utils::trim(const std::string & line) {
    Return string without trailing # comment
 ------------------------------------------------------------------------- */
 
-std::string utils::trim_comment(const std::string & line) {
+std::string utils::trim_comment(const std::string &line) {
   auto end = line.find_first_of("#");
   if (end != std::string::npos) {
     return line.substr(0, end);
@@ -377,7 +379,7 @@ std::string utils::trim_comment(const std::string & line) {
    return number of words
 ------------------------------------------------------------------------- */
 
-size_t utils::count_words(const char * text) {
+size_t utils::count_words(const char *text) {
   size_t count = 0;
   const char * buf = text;
   char c = *buf;
@@ -406,7 +408,7 @@ size_t utils::count_words(const char * text) {
    return number of words
 ------------------------------------------------------------------------- */
 
-size_t utils::count_words(const std::string & text) {
+size_t utils::count_words(const std::string &text) {
   return utils::count_words(text.c_str());
 }
 
@@ -414,7 +416,7 @@ size_t utils::count_words(const std::string & text) {
    Return number of words
 ------------------------------------------------------------------------- */
 
-size_t utils::count_words(const std::string & text, const std::string & separators) {
+size_t utils::count_words(const std::string &text, const std::string &separators) {
   size_t count = 0;
   size_t start = text.find_first_not_of(separators);
 
@@ -435,7 +437,7 @@ size_t utils::count_words(const std::string & text, const std::string & separato
    Trim comment from string and return number of words
 ------------------------------------------------------------------------- */
 
-size_t utils::trim_and_count_words(const std::string & text, const std::string & separators) {
+size_t utils::trim_and_count_words(const std::string &text, const std::string &separators) {
   return utils::count_words(utils::trim_comment(text), separators);
 }
 
@@ -526,7 +528,7 @@ std::vector<std::string> utils::split_words(const std::string &text)
    Return whether string is a valid integer number
 ------------------------------------------------------------------------- */
 
-bool utils::is_integer(const std::string & str) {
+bool utils::is_integer(const std::string &str) {
   if (str.size() == 0) {
     return false;
   }
@@ -542,7 +544,7 @@ bool utils::is_integer(const std::string & str) {
    Return whether string is a valid floating-point number
 ------------------------------------------------------------------------- */
 
-bool utils::is_double(const std::string & str) {
+bool utils::is_double(const std::string &str) {
   if (str.size() == 0) {
     return false;
   }
@@ -560,7 +562,7 @@ bool utils::is_double(const std::string & str) {
    strip off leading part of path, return just the filename
 ------------------------------------------------------------------------- */
 
-std::string utils::path_basename(const std::string & path) {
+std::string utils::path_basename(const std::string &path) {
 #if defined(_WIN32)
   size_t start = path.find_last_of("/\\");
 #else
@@ -580,7 +582,7 @@ std::string utils::path_basename(const std::string & path) {
    join two paths
 ------------------------------------------------------------------------- */
 
-std::string utils::path_join(const std::string & a, const std::string & b) {
+std::string utils::path_join(const std::string &a, const std::string &b) {
   #if defined(_WIN32)
     return fmt::format("{}\\{}", a, b);
   #else
@@ -592,7 +594,7 @@ std::string utils::path_join(const std::string & a, const std::string & b) {
    try to open file for reading
 ------------------------------------------------------------------------- */
 
-bool utils::file_is_readable(const std::string & path) {
+bool utils::file_is_readable(const std::string &path) {
   FILE * fp = fopen(path.c_str(), "r");
   if(fp) {
     fclose(fp);
@@ -607,7 +609,7 @@ bool utils::file_is_readable(const std::string & path) {
    specified
 ------------------------------------------------------------------------- */
 
-std::string utils::get_potential_file_path(const std::string& path) {
+std::string utils::get_potential_file_path(const std::string &path) {
   std::string filepath = path;
   std::string filename = utils::path_basename(path);
 
@@ -634,7 +636,7 @@ std::string utils::get_potential_file_path(const std::string& path) {
    if it has a DATE field, return the following word
 ------------------------------------------------------------------------- */
 
-std::string utils::get_potential_date(const std::string & path, const std::string & potential_name) {
+std::string utils::get_potential_date(const std::string &path, const std::string &potential_name) {
   TextFileReader reader(path, potential_name);
   reader.ignore_comments = false;
 
@@ -657,7 +659,7 @@ std::string utils::get_potential_date(const std::string & path, const std::strin
    if it has UNITS field, return following word
 ------------------------------------------------------------------------- */
 
-std::string utils::get_potential_units(const std::string & path, const std::string & potential_name) {
+std::string utils::get_potential_units(const std::string &path, const std::string &potential_name) {
   TextFileReader reader(path, potential_name);
   reader.ignore_comments = false;
 
@@ -703,6 +705,38 @@ double utils::get_conversion_factor(const int property, const int conversion)
     }
   }
   return 0.0;
+}
+
+/* ----------------------------------------------------------------------
+   convert a timespec ([[HH:]MM:]SS) to seconds
+   the strings "off" and "unlimited" result in -1.0;
+------------------------------------------------------------------------- */
+
+double utils::timespec2seconds(const std::string &timespec)
+{
+  double vals[3];
+  int i = 0;
+
+  // first handle allowed textual inputs
+  if (timespec == "off") return -1.0;
+  if (timespec == "unlimited") return -1.0;
+
+  vals[0] = vals[1] = vals[2] = 0;
+
+  ValueTokenizer values(timespec, ":");
+
+  try {
+    for (i = 0; i < 3; i++) {
+      if (!values.has_next()) break;
+      vals[i] = values.next_int();
+    }
+  } catch (TokenizerException &e) {
+    return -1.0;
+  }
+
+  if (i == 3) return (vals[0]*60 + vals[1])*60 + vals[2];
+  else if (i == 2) return vals[0]*60 + vals[1];
+  return vals[0];
 }
 
 /* ------------------------------------------------------------------ */
