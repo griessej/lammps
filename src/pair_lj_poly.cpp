@@ -115,7 +115,7 @@ void PairLjPoly::compute(int eflag, int vflag)
          ddipl = c4*r4*ijsize4inv;
          dddipl = c6*r6*ijsize6inv;
          forceipl = 2*epsilon[itype][jtype]*(-5*ijsize10*r10inv + dipl + 2*ddipl + 3*dddipl);
-         fpair = forceipl*r2inv;
+         fpair = -forceipl*r2inv;
 
          f[i][0] += delx*fpair;
          f[i][1] += dely*fpair;
