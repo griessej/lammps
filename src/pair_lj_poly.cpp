@@ -168,7 +168,7 @@ void PairLjPoly::settings(int narg, char **arg)
 {
   if (narg != 1) error->all(FLERR,"Illegal pair_style command");
 
-  cut_global = utils::numeric(FLERR,arg[0]);
+  cut_global = utils::numeric(FLERR,arg[0],false,lmp);
 
   // reset cutoffs that have been explicitly set
 
@@ -191,14 +191,14 @@ void PairLjPoly::coeff(int narg, char **arg)
   if (!allocated) allocate();
 
   int ilo,ihi,jlo,jhi;
-  utils::bounds(FLERR,arg[0],atom->ntypes,ilo,ihi);
-  utils::bounds(FLERR,arg[1],atom->ntypes,jlo,jhi);
+  utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
+  utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
 
-  double epsilon_one = utils::numeric(FLERR,arg[2]);
+  double epsilon_one = utils::numeric(FLERR,arg[2],false,lmp);
 
   double cut_one = cut_global;
   if (narg == 4) {
-    cut_one = utils::numeric(FLERR,arg[3]);
+    cut_one = utils::numeric(FLERR,arg[3],false,lmp);
   }
 
   int count = 0;
