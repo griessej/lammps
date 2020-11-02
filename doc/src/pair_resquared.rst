@@ -1,13 +1,11 @@
 .. index:: pair_style resquared
+.. index:: pair_style resquared/gpu
+.. index:: pair_style resquared/omp
 
 pair_style resquared command
 ============================
 
-pair_style resquared/gpu command
-================================
-
-pair_style resquared/omp command
-================================
+Accelerator Variants: *resquared/gpu*, *resquared/omp*
 
 Syntax
 """"""
@@ -233,4 +231,4 @@ none
 
 .. _Babadi:
 
-**(Berardi)** Babadi, Ejtehadi, Everaers, J Comp Phys, 219, 770-779 (2006).
+**(Babadi)** Babadi, Ejtehadi, Everaers, J Comp Phys, 219, 770-779 (2006).

@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
-   http://lammps.sandia.gov, Sandia National Laboratories
+   https://lammps.sandia.gov/, Sandia National Laboratories
    Steve Plimpton, sjplimp@sandia.gov
 
    Copyright (2003) Sandia Corporation.  Under the terms of Contract
@@ -18,10 +18,10 @@
 ----------------------------------------------------------------------- */
 
 #include "pair_granular.h"
-#include <mpi.h>
+
 #include <cmath>
 #include <cstring>
-#include <string>
+
 #include "atom.h"
 #include "force.h"
 #include "update.h"
@@ -37,7 +37,7 @@
 #include "error.h"
 #include "math_const.h"
 #include "math_special.h"
-#include "utils.h"
+
 
 using namespace LAMMPS_NS;
 using namespace MathConst;
@@ -73,14 +73,14 @@ PairGranular::PairGranular(LAMMPS *lmp) : Pair(lmp)
   neighprev = 0;
 
   nmax = 0;
-  mass_rigid = NULL;
+  mass_rigid = nullptr;
 
-  onerad_dynamic = NULL;
-  onerad_frozen = NULL;
-  maxrad_dynamic = NULL;
-  maxrad_frozen = NULL;
+  onerad_dynamic = nullptr;
+  onerad_frozen = nullptr;
+  maxrad_dynamic = nullptr;
+  maxrad_frozen = nullptr;
 
-  history_transfer_factors = NULL;
+  history_transfer_factors = nullptr;
 
   dt = update->dt;
 
@@ -97,7 +97,7 @@ PairGranular::PairGranular(LAMMPS *lmp) : Pair(lmp)
   // create dummy fix as placeholder for FixNeighHistory
   // this is so final order of Modify:fix will conform to input script
 
-  fix_history = NULL;
+  fix_history = nullptr;
   modify->add_fix("NEIGH_HISTORY_GRANULAR_DUMMY all DUMMY");
   fix_dummy = (FixDummy *) modify->fix[modify->nfix-1];
 }
@@ -753,7 +753,7 @@ void PairGranular::allocate()
 void PairGranular::settings(int narg, char **arg)
 {
   if (narg == 1) {
-    cutoff_global = force->numeric(FLERR,arg[0]);
+    cutoff_global = utils::numeric(FLERR,arg[0],false,lmp);
   } else {
     cutoff_global = -1; // will be set based on particle sizes, model choice
   }
@@ -784,8 +784,8 @@ void PairGranular::coeff(int narg, char **arg)
   if (!allocated) allocate();
 
   int ilo,ihi,jlo,jhi;
-  force->bounds(FLERR,arg[0],atom->ntypes,ilo,ihi);
-  force->bounds(FLERR,arg[1],atom->ntypes,jlo,jhi);
+  utils::bounds(FLERR,arg[0],1,atom->ntypes,ilo,ihi,error);
+  utils::bounds(FLERR,arg[1],1,atom->ntypes,jlo,jhi,error);
 
   //Defaults
   normal_model_one = tangential_model_one = -1;
@@ -800,35 +800,35 @@ void PairGranular::coeff(int narg, char **arg)
         error->all(FLERR,"Illegal pair_coeff command, "
                    "not enough parameters provided for Hooke option");
       normal_model_one = HOOKE;
-      normal_coeffs_one[0] = force->numeric(FLERR,arg[iarg+1]); // kn
-      normal_coeffs_one[1] = force->numeric(FLERR,arg[iarg+2]); // damping
+      normal_coeffs_one[0] = utils::numeric(FLERR,arg[iarg+1],false,lmp); // kn
+      normal_coeffs_one[1] = utils::numeric(FLERR,arg[iarg+2],false,lmp); // damping
       iarg += 3;
     } else if (strcmp(arg[iarg], "hertz") == 0) {
       if (iarg + 2 >= narg)
         error->all(FLERR,"Illegal pair_coeff command, "
                    "not enough parameters provided for Hertz option");
       normal_model_one = HERTZ;
-      normal_coeffs_one[0] = force->numeric(FLERR,arg[iarg+1]); // kn
-      normal_coeffs_one[1] = force->numeric(FLERR,arg[iarg+2]); // damping
+      normal_coeffs_one[0] = utils::numeric(FLERR,arg[iarg+1],false,lmp); // kn
+      normal_coeffs_one[1] = utils::numeric(FLERR,arg[iarg+2],false,lmp); // damping
       iarg += 3;
     } else if (strcmp(arg[iarg], "hertz/material") == 0) {
       if (iarg + 3 >= narg)
         error->all(FLERR,"Illegal pair_coeff command, "
                    "not enough parameters provided for Hertz/material option");
       normal_model_one = HERTZ_MATERIAL;
-      normal_coeffs_one[0] = force->numeric(FLERR,arg[iarg+1]); // E
-      normal_coeffs_one[1] = force->numeric(FLERR,arg[iarg+2]); // damping
-      normal_coeffs_one[2] = force->numeric(FLERR,arg[iarg+3]); // Poisson's ratio
+      normal_coeffs_one[0] = utils::numeric(FLERR,arg[iarg+1],false,lmp); // E
+      normal_coeffs_one[1] = utils::numeric(FLERR,arg[iarg+2],false,lmp); // damping
+      normal_coeffs_one[2] = utils::numeric(FLERR,arg[iarg+3],false,lmp); // Poisson's ratio
       iarg += 4;
     } else if (strcmp(arg[iarg], "dmt") == 0) {
       if (iarg + 4 >= narg)
         error->all(FLERR,"Illegal pair_coeff command, "
                    "not enough parameters provided for Hertz option");
       normal_model_one = DMT;
-      normal_coeffs_one[0] = force->numeric(FLERR,arg[iarg+1]); // E
-      normal_coeffs_one[1] = force->numeric(FLERR,arg[iarg+2]); // damping
-      normal_coeffs_one[2] = force->numeric(FLERR,arg[iarg+3]); // Poisson's ratio
-      normal_coeffs_one[3] = force->numeric(FLERR,arg[iarg+4]); // cohesion
+      normal_coeffs_one[0] = utils::numeric(FLERR,arg[iarg+1],false,lmp); // E
+      normal_coeffs_one[1] = utils::numeric(FLERR,arg[iarg+2],false,lmp); // damping
+      normal_coeffs_one[2] = utils::numeric(FLERR,arg[iarg+3],false,lmp); // Poisson's ratio
+      normal_coeffs_one[3] = utils::numeric(FLERR,arg[iarg+4],false,lmp); // cohesion
       iarg += 5;
     } else if (strcmp(arg[iarg], "jkr") == 0) {
       if (iarg + 4 >= narg)
@@ -836,10 +836,10 @@ void PairGranular::coeff(int narg, char **arg)
                    "not enough parameters provided for JKR option");
       beyond_contact = 1;
       normal_model_one = JKR;
-      normal_coeffs_one[0] = force->numeric(FLERR,arg[iarg+1]); // E
-      normal_coeffs_one[1] = force->numeric(FLERR,arg[iarg+2]); // damping
-      normal_coeffs_one[2] = force->numeric(FLERR,arg[iarg+3]); // Poisson's ratio
-      normal_coeffs_one[3] = force->numeric(FLERR,arg[iarg+4]); // cohesion
+      normal_coeffs_one[0] = utils::numeric(FLERR,arg[iarg+1],false,lmp); // E
+      normal_coeffs_one[1] = utils::numeric(FLERR,arg[iarg+2],false,lmp); // damping
+      normal_coeffs_one[2] = utils::numeric(FLERR,arg[iarg+3],false,lmp); // Poisson's ratio
+      normal_coeffs_one[3] = utils::numeric(FLERR,arg[iarg+4],false,lmp); // cohesion
       iarg += 5;
     } else if (strcmp(arg[iarg], "damping") == 0) {
       if (iarg+1 >= narg)
@@ -871,8 +871,8 @@ void PairGranular::coeff(int narg, char **arg)
         tangential_model_one = TANGENTIAL_NOHISTORY;
         tangential_coeffs_one[0] = 0;
         // gammat and friction coeff
-        tangential_coeffs_one[1] = force->numeric(FLERR,arg[iarg+2]);
-        tangential_coeffs_one[2] = force->numeric(FLERR,arg[iarg+3]);
+        tangential_coeffs_one[1] = utils::numeric(FLERR,arg[iarg+2],false,lmp);
+        tangential_coeffs_one[2] = utils::numeric(FLERR,arg[iarg+3],false,lmp);
         iarg += 4;
       } else if ((strcmp(arg[iarg+1], "linear_history") == 0) ||
                (strcmp(arg[iarg+1], "mindlin") == 0) ||
@@ -905,11 +905,11 @@ void PairGranular::coeff(int narg, char **arg)
           }
           tangential_coeffs_one[0] = -1;
         } else {
-          tangential_coeffs_one[0] = force->numeric(FLERR,arg[iarg+2]); // kt
+          tangential_coeffs_one[0] = utils::numeric(FLERR,arg[iarg+2],false,lmp); // kt
         }
         // gammat and friction coeff
-        tangential_coeffs_one[1] = force->numeric(FLERR,arg[iarg+3]);
-        tangential_coeffs_one[2] = force->numeric(FLERR,arg[iarg+4]);
+        tangential_coeffs_one[1] = utils::numeric(FLERR,arg[iarg+3],false,lmp);
+        tangential_coeffs_one[2] = utils::numeric(FLERR,arg[iarg+4],false,lmp);
         iarg += 5;
       } else {
         error->all(FLERR, "Illegal pair_coeff command, "
@@ -928,9 +928,9 @@ void PairGranular::coeff(int narg, char **arg)
         roll_model_one = ROLL_SDS;
         roll_history = 1;
         // kR and gammaR and rolling friction coeff
-        roll_coeffs_one[0] = force->numeric(FLERR,arg[iarg+2]);
-        roll_coeffs_one[1] = force->numeric(FLERR,arg[iarg+3]);
-        roll_coeffs_one[2] = force->numeric(FLERR,arg[iarg+4]);
+        roll_coeffs_one[0] = utils::numeric(FLERR,arg[iarg+2],false,lmp);
+        roll_coeffs_one[1] = utils::numeric(FLERR,arg[iarg+3],false,lmp);
+        roll_coeffs_one[2] = utils::numeric(FLERR,arg[iarg+4],false,lmp);
         iarg += 5;
       } else {
         error->all(FLERR, "Illegal pair_coeff command, "
@@ -953,9 +953,9 @@ void PairGranular::coeff(int narg, char **arg)
         twist_model_one = TWIST_SDS;
         twist_history = 1;
         // kt and gammat and friction coeff
-        twist_coeffs_one[0] = force->numeric(FLERR,arg[iarg+2]);
-        twist_coeffs_one[1] = force->numeric(FLERR,arg[iarg+3]);
-        twist_coeffs_one[2] = force->numeric(FLERR,arg[iarg+4]);
+        twist_coeffs_one[0] = utils::numeric(FLERR,arg[iarg+2],false,lmp);
+        twist_coeffs_one[1] = utils::numeric(FLERR,arg[iarg+3],false,lmp);
+        twist_coeffs_one[2] = utils::numeric(FLERR,arg[iarg+4],false,lmp);
         iarg += 5;
       } else {
         error->all(FLERR, "Illegal pair_coeff command, "
@@ -964,7 +964,7 @@ void PairGranular::coeff(int narg, char **arg)
     } else if (strcmp(arg[iarg], "cutoff") == 0) {
       if (iarg + 1 >= narg)
         error->all(FLERR, "Illegal pair_coeff command, not enough parameters");
-      cutoff_one = force->numeric(FLERR,arg[iarg+1]);
+      cutoff_one = utils::numeric(FLERR,arg[iarg+1],false,lmp);
       iarg += 2;
     } else error->all(FLERR, "Illegal pair coeff command");
   }
@@ -1101,7 +1101,7 @@ void PairGranular::init_style()
   // it replaces FixDummy, created in the constructor
   // this is so its order in the fix list is preserved
 
-  if (use_history && fix_history == NULL) {
+  if (use_history && fix_history == nullptr) {
     char dnumstr[16];
     sprintf(dnumstr,"%d",size_history);
     char **fixarg = new char*[4];
@@ -1125,7 +1125,7 @@ void PairGranular::init_style()
 
   // check for FixRigid so can extract rigid body masses
 
-  fix_rigid = NULL;
+  fix_rigid = nullptr;
   for (i = 0; i < modify->nfix; i++)
     if (modify->fix[i]->rigid_flag) break;
   if (i < modify->nfix) fix_rigid = modify->fix[i];
@@ -1330,20 +1330,20 @@ void PairGranular::read_restart(FILE *fp)
   int me = comm->me;
   for (i = 1; i <= atom->ntypes; i++) {
     for (j = i; j <= atom->ntypes; j++) {
-      if (me == 0) utils::sfread(FLERR,&setflag[i][j],sizeof(int),1,fp,NULL,error);
+      if (me == 0) utils::sfread(FLERR,&setflag[i][j],sizeof(int),1,fp,nullptr,error);
       MPI_Bcast(&setflag[i][j],1,MPI_INT,0,world);
       if (setflag[i][j]) {
         if (me == 0) {
-          utils::sfread(FLERR,&normal_model[i][j],sizeof(int),1,fp,NULL,error);
-          utils::sfread(FLERR,&damping_model[i][j],sizeof(int),1,fp,NULL,error);
-          utils::sfread(FLERR,&tangential_model[i][j],sizeof(int),1,fp,NULL,error);
-          utils::sfread(FLERR,&roll_model[i][j],sizeof(int),1,fp,NULL,error);
-          utils::sfread(FLERR,&twist_model[i][j],sizeof(int),1,fp,NULL,error);
-          utils::sfread(FLERR,normal_coeffs[i][j],sizeof(double),4,fp,NULL,error);
-          utils::sfread(FLERR,tangential_coeffs[i][j],sizeof(double),3,fp,NULL,error);
-          utils::sfread(FLERR,roll_coeffs[i][j],sizeof(double),3,fp,NULL,error);
-          utils::sfread(FLERR,twist_coeffs[i][j],sizeof(double),3,fp,NULL,error);
-          utils::sfread(FLERR,&cutoff_type[i][j],sizeof(double),1,fp,NULL,error);
+          utils::sfread(FLERR,&normal_model[i][j],sizeof(int),1,fp,nullptr,error);
+          utils::sfread(FLERR,&damping_model[i][j],sizeof(int),1,fp,nullptr,error);
+          utils::sfread(FLERR,&tangential_model[i][j],sizeof(int),1,fp,nullptr,error);
+          utils::sfread(FLERR,&roll_model[i][j],sizeof(int),1,fp,nullptr,error);
+          utils::sfread(FLERR,&twist_model[i][j],sizeof(int),1,fp,nullptr,error);
+          utils::sfread(FLERR,normal_coeffs[i][j],sizeof(double),4,fp,nullptr,error);
+          utils::sfread(FLERR,tangential_coeffs[i][j],sizeof(double),3,fp,nullptr,error);
+          utils::sfread(FLERR,roll_coeffs[i][j],sizeof(double),3,fp,nullptr,error);
+          utils::sfread(FLERR,twist_coeffs[i][j],sizeof(double),3,fp,nullptr,error);
+          utils::sfread(FLERR,&cutoff_type[i][j],sizeof(double),1,fp,nullptr,error);
         }
         MPI_Bcast(&normal_model[i][j],1,MPI_INT,0,world);
         MPI_Bcast(&damping_model[i][j],1,MPI_INT,0,world);
